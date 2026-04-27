@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <title>Pour Alicia 💕</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; }
+
+    body {
+      min-height: 100vh;
+      background: #ffd6e7;
+      background-image:
+        radial-gradient(ellipse at 20% 10%, #ffe8f2 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 90%, #ffcce0 0%, transparent 55%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Ambient background hearts ── */
+    .bg-hearts {
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    .bg-hearts span {
+      position: absolute; font-size: 16px; opacity: 0; bottom: -40px;
+      animation: floatBg var(--dur) ease-in-out var(--del) infinite;
+    }
+    .bg-hearts span:nth-child(1) { left:  6%; --dur: 9s;  --del:  0s;  }
+    .bg-hearts span:nth-child(2) { left: 20%; --dur: 12s; --del: -3s;  }
+    .bg-hearts span:nth-child(3) { left: 38%; --dur: 8s;  --del: -1.5s;}
+    .bg-hearts span:nth-child(4) { left: 58%; --dur: 11s; --del: -5s;  }
+    .bg-hearts span:nth-child(5) { left: 76%; --dur: 7s;  --del: -2.5s;}
+    .bg-hearts span:nth-child(6) { left: 90%; --dur: 13s; --del: -4s;  }
+    @keyframes floatBg {
+      0%   { transform: translateY(0) rotate(0deg);    opacity: 0;    }
+      10%  {                                            opacity: 0.15; }
+      90%  {                                            opacity: 0.15; }
+      100% { transform: translateY(-115vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* ── Dog container ── */
+    .scene { display: flex; flex-direction: column; align-items: center; gap: 0; position: relative; z-index: 1; }
+
+    #dog-wrap {
+      width: min(288px, 78vw);
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    #dog-svg {
+      width: 100%; height: auto; display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      filter: drop-shadow(0 6px 18px rgba(200,50,100,0.18));
+      transition: transform 0.12s ease;
+    }
+    #dog-wrap:active #dog-svg { transform: scale(0.96); }
+
+    /* ── Face / sign toggle ── */
+    #face-normal, #sign-before { display: block; }
+    #face-happy,  #sign-after  { display: none;  }
+
+    #dog-svg.is-happy #face-normal { display: none;  }
+    #dog-svg.is-happy #face-happy  { display: block; }
+    #dog-svg.is-happy #sign-before { display: none;  }
+    #dog-svg.is-happy #sign-after  { display: block; }
+
+    /* ── Tail wag ── */
+    @keyframes wagTail {
+      0%,100% { transform: rotate(0deg);   }
+      33%      { transform: rotate(25deg);  }
+      66%      { transform: rotate(-18deg); }
+    }
+    #dog-svg.is-happy #tail {
+      transform-box: fill-box;
+      transform-origin: 20% 80%;
+      animation: wagTail 0.42s ease-in-out infinite;
+    }
+
+    /* ── Dog bounce ── */
+    @keyframes dogBounce {
+      0%,100% { transform: translateY(0);     }
+      50%      { transform: translateY(-14px); }
+    }
+    #dog-wrap.bouncing { animation: dogBounce 0.5s ease-in-out 3; }
+
+    /* ── Floating hearts ── */
+    @keyframes floatHeart {
+      0%   { opacity: 1;   transform: translateY(0)      scale(0.4) rotate(var(--r)); }
+      75%  { opacity: 0.9; }
+      100% { opacity: 0;   transform: translateY(-180px) scale(1.5) rotate(var(--r)); }
+    }
+    .heart {
+      position: fixed;
+      font-size: clamp(22px, 6vw, 32px);
+      pointer-events: none; z-index: 999;
+      animation: floatHeart var(--d) ease-out forwards;
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-hearts" aria-hidden="true">
+  <span>💕</span><span>🩷</span><span>💗</span>
+  <span>💕</span><span>💖</span><span>🩷</span>
+</div>
+
+<div class="scene">
+  <div id="dog-wrap">
+    <svg id="dog-svg" viewBox="0 0 144 252"
+         xmlns="http://www.w3.org/2000/svg"
+         shape-rendering="crispEdges"></svg>
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────
+   PIXEL ART DOG  –  18 cols × 31 rows, P=8px
+   Palette:
+     0 = transparent
+     1 = #1e1208  dark outline
+     2 = #f2b870  light fur  (head)
+     3 = #d18c46  medium fur (body)
+     4 = #b06c24  dark fur   (ears, tail)
+     5 = #f09898  ear pink
+     6 = #ffffff  white      (sign fill, eye shine)
+     7 = #f05875  tongue
+     8 = #e87898  sign border pink
+     9 = #ffb3c8  blush (rendered with opacity)
+───────────────────────────────────────────── */
+const P = 8;
+const COLORS = {
+  1:'#1e1208', 2:'#f2b870', 3:'#d18c46', 4:'#b06c24',
+  5:'#f09898', 6:'#ffffff', 7:'#f05875', 8:'#e87898', 9:'#ffb3c8'
+};
+
+// BASE rows – everything except the face (rows 7-12)
+const BASE = [
+  // row, cells[]
+  [ 0, [0,0,1,4,0,0,0,0,0,0,0,0,0,0,4,1,0,0]],
+  [ 1, [0,0,1,4,5,0,0,0,0,0,0,0,0,5,4,1,0,0]],
+  [ 2, [0,0,1,4,5,0,0,0,0,0,0,0,0,5,4,1,0,0]],
+  [ 3, [0,0,1,4,0,0,0,0,0,0,0,0,0,0,4,1,0,0]],
+  [ 4, [0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0]],  // head top outline
+  [ 5, [0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0]],  // head fill
+  [ 6, [0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,1,0,0]],  // head fill
+  // rows 7-12 = face (injected separately)
+  [13, [0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,4,0]],  // head bottom + tail base
+  [14, [0,0,0,1,3,3,3,3,3,3,3,3,3,3,1,0,4,0]],  // neck
+  [15, [0,1,1,3,3,3,3,3,3,3,3,3,3,3,3,1,1,0]],  // shoulders
+  [16, [0,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1,0]],  // body
+  [17, [0,1,3,3,0,0,0,0,0,0,0,0,0,0,3,3,1,0]],  // arms out / sign gap
+  [18, [0,1,3,3,8,8,8,8,8,8,8,8,8,8,3,3,1,0]],  // sign border top
+  [19, [0,1,3,3,8,6,6,6,6,6,6,6,6,8,3,3,1,0]],  // sign fill
+  [20, [0,1,3,3,8,6,6,6,6,6,6,6,6,8,3,3,1,0]],
+  [21, [0,1,3,3,8,6,6,6,6,6,6,6,6,8,3,3,1,0]],
+  [22, [0,1,3,3,8,6,6,6,6,6,6,6,6,8,3,3,1,0]],
+  [23, [0,1,3,3,8,6,6,6,6,6,6,6,6,8,3,3,1,0]],
+  [24, [0,1,3,3,8,8,8,8,8,8,8,8,8,8,3,3,1,0]],  // sign border bottom
+  [25, [0,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1,0]],  // body rejoins
+  [26, [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0]],  // body bottom outline
+  [27, [0,0,0,1,3,3,3,1,0,0,0,1,3,3,3,1,0,0]],  // legs
+  [28, [0,0,0,1,3,3,3,1,0,0,0,1,3,3,3,1,0,0]],
+  [29, [0,0,0,1,3,3,3,1,0,0,0,1,3,3,3,1,0,0]],
+  [30, [0,0,0,1,1,1,1,1,0,0,0,1,1,1,1,1,0,0]],  // feet
+];
+
+// TAIL pixels (behind body, upper-right)
+const TAIL = [
+  [10, 16, 1],  // outline col
+  [11, 16, 4],  // fur
+  [11, 17, 1],  // curl outline
+  [12, 16, 4],  // fur
+];
+
+// NORMAL face rows 7-12
+const FACE_NORMAL = [
+  [ 7, [0,0,1,2,1,1,2,2,2,2,2,2,1,1,2,1,0,0]],  // eyes (2×2 filled)
+  [ 8, [0,0,1,2,1,6,2,2,2,2,2,2,1,6,2,1,0,0]],  // eye shine
+  [ 9, [0,0,1,2,2,2,2,1,1,1,2,2,2,2,2,1,0,0]],  // nose
+  [10, [0,0,1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,0]],  // chin + tail
+  [11, [0,0,1,2,2,1,2,2,2,2,2,2,1,2,2,1,4,1]],  // mouth corners
+  [12, [0,0,1,2,2,2,1,1,7,7,1,1,2,2,2,1,4,0]],  // mouth + small tongue
+];
+
+// HAPPY face rows 7-12
+const FACE_HAPPY = [
+  [ 7, [0,0,1,2,2,1,2,2,2,2,2,2,1,2,2,1,0,0]],  // ^ eye tops
+  [ 8, [0,0,1,2,1,2,1,2,2,2,2,1,2,1,2,1,0,0]],  // ^ eye corners
+  [ 9, [0,0,1,9,2,2,2,1,1,1,2,2,2,2,9,1,0,0]],  // nose + blush
+  [10, [0,0,1,9,2,2,2,2,2,2,2,2,2,2,9,1,1,0]],  // blush + tail
+  [11, [0,0,1,2,1,2,2,2,2,2,2,2,1,2,2,1,4,1]],  // wide smile corners
+  [12, [0,0,1,2,2,1,7,7,7,7,7,7,1,2,2,1,4,0]],  // big tongue
+];
+
+/* ── SVG helpers ── */
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+}
+function group(id) {
+  const g = document.createElementNS(NS, 'g');
+  if (id) g.id = id;
+  return g;
+}
+function addPixels(g, rows) {
+  for (const [r, cells] of rows) {
+    for (let c = 0; c < cells.length; c++) {
+      const code = cells[c];
+      if (!code || !COLORS[code]) continue;
+      const rect = el('rect', {
+        x: c * P, y: r * P, width: P, height: P, fill: COLORS[code]
+      });
+      if (code === 9) rect.setAttribute('opacity', '0.55');
+      g.appendChild(rect);
+    }
+  }
+}
+function addDots(g, dots) {
+  for (const [r, c, code] of dots) {
+    if (!COLORS[code]) continue;
+    g.appendChild(el('rect', {
+      x: c * P, y: r * P, width: P, height: P, fill: COLORS[code]
+    }));
+  }
+}
+
+/* ── Build the SVG ── */
+const svg = document.getElementById('dog-svg');
+
+// 1. Tail (behind body)
+const tailG = group('tail');
+addDots(tailG, TAIL);
+svg.appendChild(tailG);
+
+// 2. Base (ears, head frame, body, sign frame, legs)
+const baseG = group('base');
+addPixels(baseG, BASE);
+svg.appendChild(baseG);
+
+// 3. Normal face
+const faceNorm = group('face-normal');
+addPixels(faceNorm, FACE_NORMAL);
+svg.appendChild(faceNorm);
+
+// 4. Happy face (hidden until click)
+const faceHappy = group('face-happy');
+addPixels(faceHappy, FACE_HAPPY);
+svg.appendChild(faceHappy);
+
+/* ── Sign text (SVG text overlaid on white pixels) ──
+   Sign white inner: rows 19-23, cols 5-12
+   → x=40, y=152, w=64, h=40   centre-x = 72 ── */
+const FONT = "'Press Start 2P', monospace";
+
+function signText(id, lines) {
+  const g = group(id);
+  // Corner hearts
+  [42, 100].forEach(x => {
+    const t = el('text', { x, y: 161, 'font-size': 4,
+      'font-family': 'serif', fill: '#e87898', 'text-anchor': 'middle' });
+    t.textContent = '♥';
+    g.appendChild(t);
+  });
+  lines.forEach(([text, y, size, style]) => {
+    const t = el('text', {
+      x: 72, y,
+      'font-size': size || 5,
+      'font-family': FONT,
+      fill: '#d44070',
+      'text-anchor': 'middle',
+      'font-style': style || 'normal'
+    });
+    t.textContent = text;
+    g.appendChild(t);
+  });
+  return g;
+}
+
+svg.appendChild(signText('sign-before', [
+  ['clique moi', 168, 5],
+  ['dessus',     180, 5],
+]));
+svg.appendChild(signText('sign-after', [
+  ['Alicia',    163, 5.5],
+  ["je t'aime", 175, 4.8],
+  ['(un peu)',  186, 4,  'italic'],
+]));
+
+/* ── Interaction ── */
+const dogWrap = document.getElementById('dog-wrap');
+const dogSvg  = document.getElementById('dog-svg');
+const EMOJIS  = ['💕','💗','🩷','💓','💖','❤️','💝'];
+let   isHappy = false;
+
+function spawnHearts() {
+  const r  = dogWrap.getBoundingClientRect();
+  const cx = r.left + r.width  * 0.5;
+  const ty = r.top  + r.height * 0.2;
+  for (let i = 0; i < 8; i++) {
+    setTimeout(() => {
+      const h = document.createElement('span');
+      h.className   = 'heart';
+      h.textContent = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+      h.style.left  = (cx + (Math.random() - 0.5) * r.width * 1.4) + 'px';
+      h.style.top   = ty + 'px';
+      h.style.setProperty('--r', (Math.random() * 40 - 20) + 'deg');
+      h.style.setProperty('--d', (1.0 + Math.random() * 0.8) + 's');
+      document.body.appendChild(h);
+      h.addEventListener('animationend', () => h.remove());
+    }, i * 90);
+  }
+}
+
+function goHappy() {
+  if (!isHappy) {
+    isHappy = true;
+    dogSvg.classList.add('is-happy');
+    dogWrap.classList.add('bouncing');
+    dogWrap.addEventListener('animationend',
+      () => dogWrap.classList.remove('bouncing'), { once: true });
+  }
+  spawnHearts();
+}
+
+dogWrap.addEventListener('click', goHappy);
+dogWrap.addEventListener('touchend', e => { e.preventDefault(); goHappy(); }, { passive: false });
+</script>
+</body>
+</html>
