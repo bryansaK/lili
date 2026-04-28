@@ -50,7 +50,7 @@
     .scene { display: flex; flex-direction: column; align-items: center; gap: 0; position: relative; z-index: 1; }
 
     #dog-wrap {
-      width: min(288px, 78vw);
+      width: min(190px, 52vw);
       cursor: pointer;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
@@ -115,7 +115,7 @@
 
 <div class="scene">
   <div id="dog-wrap">
-    <svg id="dog-svg" viewBox="0 0 144 252"
+    <svg id="dog-svg" viewBox="0 0 144 240"
          xmlns="http://www.w3.org/2000/svg"></svg>
   </div>
 </div>
@@ -162,14 +162,13 @@ const BASE = [
   [20, [0,1,3,3,8,6,6,6,6,6,6,6,6,8,3,3,1,0]],
   [21, [0,1,3,3,8,6,6,6,6,6,6,6,6,8,3,3,1,0]],
   [22, [0,1,3,3,8,6,6,6,6,6,6,6,6,8,3,3,1,0]],
-  [23, [0,1,3,3,8,6,6,6,6,6,6,6,6,8,3,3,1,0]],
-  [24, [0,1,3,3,8,8,8,8,8,8,8,8,8,8,3,3,1,0]],  // sign border bottom
-  [25, [0,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1,0]],  // body rejoins
-  [26, [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0]],  // body bottom outline
-  [27, [0,0,0,1,3,3,3,1,0,0,0,1,3,3,3,1,0,0]],  // legs
+  [23, [0,1,3,3,8,8,8,8,8,8,8,8,8,8,3,3,1,0]],  // sign border bottom
+  [24, [0,1,3,3,3,3,3,3,3,3,3,3,3,3,3,3,1,0]],  // body rejoins
+  [25, [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0]],  // body bottom outline
+  [26, [0,0,0,1,3,3,3,1,0,0,0,1,3,3,3,1,0,0]],  // legs
+  [27, [0,0,0,1,3,3,3,1,0,0,0,1,3,3,3,1,0,0]],
   [28, [0,0,0,1,3,3,3,1,0,0,0,1,3,3,3,1,0,0]],
-  [29, [0,0,0,1,3,3,3,1,0,0,0,1,3,3,3,1,0,0]],
-  [30, [0,0,0,1,1,1,1,1,0,0,0,1,1,1,1,1,0,0]],  // feet
+  [29, [0,0,0,1,1,1,1,1,0,0,0,1,1,1,1,1,0,0]],  // feet
 ];
 
 // TAIL pixels (behind body, upper-right)
@@ -212,13 +211,15 @@ function group(id) {
   if (id) g.id = id;
   return g;
 }
+const RX = P * 0.38;
 function addPixels(g, rows) {
   for (const [r, cells] of rows) {
     for (let c = 0; c < cells.length; c++) {
       const code = cells[c];
       if (!code || !COLORS[code]) continue;
       const rect = el('rect', {
-        x: c * P, y: r * P, width: P, height: P, fill: COLORS[code]
+        x: c * P, y: r * P, width: P, height: P, fill: COLORS[code],
+        rx: RX, ry: RX
       });
       if (code === 9) rect.setAttribute('opacity', '0.55');
       g.appendChild(rect);
@@ -229,7 +230,8 @@ function addDots(g, dots) {
   for (const [r, c, code] of dots) {
     if (!COLORS[code]) continue;
     g.appendChild(el('rect', {
-      x: c * P, y: r * P, width: P, height: P, fill: COLORS[code]
+      x: c * P, y: r * P, width: P, height: P, fill: COLORS[code],
+      rx: RX, ry: RX
     }));
   }
 }
@@ -258,15 +260,15 @@ addPixels(faceHappy, FACE_HAPPY);
 svg.appendChild(faceHappy);
 
 /* ── Sign text (SVG text overlaid on white pixels) ──
-   Sign white inner: rows 19-23, cols 5-12
-   → x=40, y=152, w=64, h=40   centre-x = 72 ── */
+   Sign white inner: rows 19-22, cols 5-12
+   → x=40, y=152, w=64, h=32   centre-x = 72 ── */
 const FONT = "'Press Start 2P', monospace";
 
 function signText(id, lines) {
   const g = group(id);
   // Corner hearts
   [42, 100].forEach(x => {
-    const t = el('text', { x, y: 161, 'font-size': 4,
+    const t = el('text', { x, y: 159, 'font-size': 4,
       'font-family': 'serif', fill: '#e87898', 'text-anchor': 'middle' });
     t.textContent = '♥';
     g.appendChild(t);
@@ -287,13 +289,13 @@ function signText(id, lines) {
 }
 
 svg.appendChild(signText('sign-before', [
-  ['clique moi', 168, 5],
-  ['dessus',     180, 5],
+  ['clique moi', 167, 5],
+  ['dessus',     178, 5],
 ]));
 svg.appendChild(signText('sign-after', [
-  ['Alicia',    163, 5.5],
-  ["je t'aime", 175, 4.8],
-  ['(un peu)',  186, 4,  'italic'],
+  ['Alicia',    162, 5.5],
+  ["je t'aime", 173, 4.8],
+  ['(un peu)',  182, 4,  'italic'],
 ]));
 
 /* ── Interaction ── */
